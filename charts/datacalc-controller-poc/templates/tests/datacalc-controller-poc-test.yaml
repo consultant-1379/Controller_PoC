@@ -1,0 +1,44 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ template "datacalc-controller-poc.name" . }}-test
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name | quote }}
+    app.kubernetes.io/version: {{ include "datacalc-controller-poc.version" . }}
+    helm.sh/chart: {{ template "datacalc-controller-poc.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+  {{- include "datacalc-controller-poc.product-info" . | indent 4 }}
+    "helm.sh/hook": test-success
+spec:
+  {{- if include "datacalc-controller-poc.pullSecrets" . }}
+  imagePullSecrets:
+    - name: {{ template "datacalc-controller-poc.pullSecrets" . }}
+  {{- end }}
+  containers:
+  - name: datacalc-controller-poc.test
+    image: {{ template "datacalc-controller-poc.registryUrl" . }}/{{ index .Values "imageCredentials" "datacalc-controller-poc-test" "repoPath" }}/{{ index .Values "images" "datacalc-controller-poc-test" "name" }}:{{ index .Values "images" "datacalc-controller-poc-test" "tag" }}
+    env:
+      - name: SERVICE_HOSTNAME
+        value: {{ template "datacalc-controller-poc.name" . }}
+      - name: SERVICE_PORT
+        value: "8080"
+    command: ["/bin/sh", "-c", "status=$(curl --silent --output /dev/null -w '%{http_code}' --connect-timeout 20 http://$SERVICE_HOSTNAME:$SERVICE_PORT/v1/sample) && if [[ $status -eq 200 ]]; then exit 0; else exit 1; fi"]
+  restartPolicy: Never

@@ -1,0 +1,33 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "datacalc-controller-poc.name" . }}
+  labels:
+    app.kubernetes.io/name: {{ template "datacalc-controller-poc.name" . }}
+    helm.sh/chart: {{ template "datacalc-controller-poc.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/version: {{ template "datacalc-controller-poc.version" . }}
+  annotations:
+  {{- include "datacalc-controller-poc.product-info" . | indent 4 }}
+spec:
+  minAvailable: {{ template "datacalc-controller-poc.pod-disruption-budget" . }}
+  selector:
+    matchLabels:
+      app: {{ template "datacalc-controller-poc.name" . }}
